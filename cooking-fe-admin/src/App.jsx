@@ -1,4 +1,5 @@
 import "@/app.scss";
+import "@/i18n";
 import {Navigate, Route, Routes} from "react-router-dom";
 import {ROUTES} from "@/routes/routes";
 import Login from "@/pages/login/Login";
@@ -7,7 +8,6 @@ import ForgotPassword from "@/pages/forgot-password/ForgotPassword";
 import ChangePassword from "@/pages/forgot-password/ChangePassword";
 import SignUp from "@/pages/sign-up/SignUp";
 import PrivateRoute from "@/components/PrivateRoute";
-import Home from "@/pages/home/Home";
 import MainLayout from "@/layouts/main-layout/MainLayout";
 import AccountSetting from "@/pages/account-setting/AccountSetting";
 import NotFound from "@/pages/not-found/NotFound";
@@ -19,6 +19,7 @@ import RecipesComments from "@/pages/recipes/comment/RecipesComments";
 import {QueryClientProvider} from "@tanstack/react-query";
 import {queryClient} from "@/utils/api";
 import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
+import {Toaster} from "sonner";
 
 function App() {
     return (
@@ -37,8 +38,8 @@ function App() {
                     {/* Define your private r   outes */}
                     <Route element={<PrivateRoute/>}>
                         <Route element={<MainLayout/>}>
-                            <Route path={ROUTES.HOME} element={<Home/>}/>
-                            <Route path="/home" element={<Navigate to={ROUTES.HOME}/>}/>
+                            {/*<Route path={ROUTES.HOME} element={<Home/>}/>*/}
+                            <Route path={ROUTES.HOME} element={<Navigate to={ROUTES.RECIPES}/>}/>
 
                             <Route path={ROUTES.ACCOUNT_SETTING} element={<AccountSetting/>}/>
 
@@ -53,6 +54,9 @@ function App() {
                     <Route path="*" element={<NotFound/>}/>
                 </Routes>
             </AuthProvider>
+
+            <Toaster position="bottom-right" richColors closeButton={true}/>
+
             <ReactQueryDevtools initialIsOpen={false}/>
         </QueryClientProvider>
     )

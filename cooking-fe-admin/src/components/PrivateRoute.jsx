@@ -7,6 +7,7 @@ const PrivateRoute = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const {token} = useAuth();
+    console.log("------> Line: 10 | PrivateRoute.jsx token: ", token);
 
     useEffect(() => {
         if (!token) {

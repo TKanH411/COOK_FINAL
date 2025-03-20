@@ -1,9 +1,11 @@
 import {QueryClient} from "@tanstack/react-query";
 import {LOCAL_STORAGE_KEY} from "@/utils/localStorage";
+import {ENV} from "@/utils/env";
 
 const METHOD = {
     GET: "GET",
     POST: "POST",
+    PATCH: "PATCH",
     PUT: "PUT",
     DELETE: "DELETE"
 }
@@ -36,7 +38,7 @@ const httpRequest = async ({uri, options}) => {
         options.body = options.method === "GET" ? undefined : body;
     }
 
-    const response = await fetch("http://localhost:8080" + uri, options);
+    const response = await fetch(ENV.API_URL + uri, options);
 
     if (!response || !response.ok) {
         console.error("API Request failed: ", response);
@@ -88,6 +90,13 @@ const httpPost = ({uri, options}) => {
     });
 }
 
+const httpPatch = ({uri, options}) => {
+    return httpRequest({
+        uri: uri,
+        options: {method: METHOD.PATCH, ...options}
+    });
+}
+
 // const httpPut = ({uri, options}: HttpRequest) => {
 //     return httpRequest({
 //         uri: uri,
@@ -106,7 +115,8 @@ export {
     METHOD,
     queryClient,
     httpGet,
-    httpPost
+    httpPost,
+    httpPatch
     // httpPut,
     // httpDelete
 }
