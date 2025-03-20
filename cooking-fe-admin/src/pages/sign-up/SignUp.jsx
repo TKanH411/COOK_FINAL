@@ -9,6 +9,8 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import {DevTool} from "@hookform/devtools";
 import {ROUTES} from "@/routes/routes";
 import FieldError from "@/components/FieldError";
+import {toast} from "sonner";
+import {useSignUp} from "@/hooks/useAuth";
 
 const FormSchema = z.object({
     email: z.string().nonempty("Email is required"),
@@ -23,6 +25,8 @@ const FormSchema = z.object({
 function SignUp() {
     const navigate = useNavigate();
 
+    const signUpMutation = useSignUp();
+
     const {control, handleSubmit, formState} = useForm({
         resolver: zodResolver(FormSchema),
         defaultValues: {
@@ -36,7 +40,17 @@ function SignUp() {
 
     const onSubmit = handleSubmit((data) => {
         console.log(data);
-        navigate(ROUTES.LOGIN);
+
+        signUpMutation.mutate(data, {
+            onSuccess: (data) => {
+                console.log("Sign up success: ", data);
+                navigate(ROUTES.LOGIN);
+            },
+            onError: (error) => {
+                console.error("Sign up failed: ", error);
+                toast.error(error.message);
+            }
+        })
     })
 
     return (
@@ -109,6 +123,7 @@ function SignUp() {
                                 <div className={cn("relative")}>
                                     <Input
                                         {...field}
+                                        type="password"
                                         className={cn(
                                             "block w-full rounded-full border-0 bg-white/5 text-white py-2 pl-4 pr-10 text-sm/6 outline-white/25",
                                             "outline-none outline-1 -outline-offset-2 outline-white/25",
@@ -133,6 +148,7 @@ function SignUp() {
                                 <div className={cn("relative")}>
                                     <Input
                                         {...field}
+                                        type="password"
                                         className={cn(
                                             "block w-full rounded-full border-0 bg-white/5 text-white py-2 pl-4 pr-10 text-sm/6 outline-white/25",
                                             "outline-none outline-1 -outline-offset-2 outline-white/25",

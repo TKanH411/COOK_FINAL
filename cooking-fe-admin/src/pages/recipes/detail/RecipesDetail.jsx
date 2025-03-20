@@ -2,13 +2,14 @@ import {Link, useParams} from "react-router-dom";
 import {Fragment, useEffect, useState} from "react";
 import {useMainLayout} from "@/layouts/main-layout/context/hooks/useMainLayout";
 import {ROUTES} from "@/routes/routes";
-import {dataRecipes} from "@/utils/mock";
 import {parseColorStatus, STATUS_LIST} from "@/utils/string";
 import {cn} from "@/lib/utils";
 import {ChatBubbleBottomCenterTextIcon, ClockIcon, PencilSquareIcon, UserIcon} from "@heroicons/react/24/outline";
 import {Button, Menu, MenuButton, MenuItem, MenuItems} from "@headlessui/react";
 import {ChevronDownIcon} from "@heroicons/react/20/solid";
 import DetailHeader from "@/pages/recipes/components/DetailHeader";
+import {useChangeStatusRecipe, useDetailRecipe} from "@/hooks/useRecipe";
+import {toast} from "sonner";
 
 export default function RecipesDetail() {
     const {id} = useParams();
@@ -16,14 +17,36 @@ export default function RecipesDetail() {
     const {setBreadcrumbs} = useMainLayout();
 
     const [detail, setDetail] = useState({});
+    console.log("------> Line: 20 | RecipesDetail.jsx detail: ", detail);
+
+    const changeStatusMutation = useChangeStatusRecipe();
+    console.log("------> Line: 23 | RecipesDetail.jsx changeStatusMutation: ", changeStatusMutation.data);
+    const detailMutation = useDetailRecipe(id);
+    console.log("------> Line: 25 | RecipesDetail.jsx detailMutation: ", detailMutation.data);
 
     const changeStatus = (status) => {
-        console.log("------> Line: 10 | RecipesDetail.jsx changeStatus");
-        console.log("------> Line: 11 | RecipesDetail.jsx status: ", status);
+        console.log("------> Line: 28 | RecipesDetail.jsx changeStatus");
+        console.log("------> Line: 29 | RecipesDetail.jsx status: ", status);
+
+        changeStatusMutation.mutate({
+            id: id,
+            params: {
+                status: status,
+            }
+        }, {
+            onSuccess: (data) => {
+                console.log("------> Line: 33 | RecipesDetail.jsx changeStatusMutation onSuccess: ", data);
+                toast.success("Recipes updated");
+            },
+            onError: (err) => {
+                console.log("------> Line: 37 | RecipesDetail.jsx changeStatusMutation onError: ", err);
+                toast.error("Failed to update recipe");
+            }
+        })
     }
 
     useEffect(() => {
-        console.log("------> Line: 10 | RecipesDetail.jsx fetchDataDetail");
+        console.log("------> Line: 33 | RecipesDetail.jsx fetchDataDetail");
         setBreadcrumbs(
             [{
                 title: "Home",
@@ -39,23 +62,20 @@ export default function RecipesDetail() {
     }, [detail.title, id, setBreadcrumbs]);
 
     useEffect(() => {
-        console.log("------> Line: 10 | RecipesDetail.jsx fetchDataDetail");
-        console.log("------> Line: 11 | RecipesDetail.jsx id: ", id);
+        console.log("------> Line: 49 | RecipesDetail.jsx fetchDataDetail");
 
-        const res = dataRecipes.find((item) => {
-            return item.id === Number(id);
-        });
+        if (!detailMutation.isLoading && detailMutation.data) {
+            const {statusColor, color} = parseColorStatus(detailMutation.data?.status || STATUS_LIST.DRAFT);
 
-        const {statusColor, color} = parseColorStatus(res.status);
-
-        setDetail({
-            ...res,
-            styleColor: {
-                backgroundColor: statusColor,
-                color: color,
-            }
-        });
-    }, [id]);
+            setDetail({
+                ...detailMutation.data,
+                styleColor: {
+                    backgroundColor: statusColor,
+                    color: color,
+                }
+            });
+        }
+    }, [detailMutation.isLoading, detailMutation.data]);
 
     return (
         <div className={cn("grid grid-cols-12 justify-center")}>
@@ -97,7 +117,7 @@ export default function RecipesDetail() {
                                     borderColor: detail.styleColor?.backgroundColor,
                                 }}
                             >
-                                {detail.status}
+                                {(detail.status || STATUS_LIST.DRAFT).toUpperCase()}
                                 <ChevronDownIcon className={cn("size-6")}/>
                             </MenuButton>
 
@@ -144,27 +164,22 @@ export default function RecipesDetail() {
 
                             <div className={cn("flex gap-1 items-center")}>
                                 <UserIcon className={cn("size-5")}/>
-                                {detail.ingredients?.ration}
+                                {detail.portion}
                             </div>
 
                             <div className={cn("flex flex-col gap-4")}>
-                                {detail.ingredients?.parts?.map((item, idx) => (
+                                {detail.ingredients?.map((item, idx) => (
                                     <div key={idx} className={cn("flex flex-col gap-1 items-start")}>
-                                        <p className={cn("font-semibold text-xl")}>{item.name}</p>
-
-                                        <div className={cn("w-full pr-10")}>
-                                            {item.ingredients.map((item, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className={cn(
-                                                        "flex gap-2 items-center text-gray-600",
-                                                        "border-b border-dashed border-gray-300 py-3"
-                                                    )}
-                                                >
-                                                    <span className={cn("font-bold")}>{item.amount}</span>
-                                                    <span>{item.name}</span>
-                                                </div>
-                                            ))}
+                                        <div
+                                            key={idx}
+                                            className={cn(
+                                                "flex gap-2 items-center text-gray-600",
+                                                "border-b border-dashed border-gray-300 py-3 w-full"
+                                            )}
+                                        >
+                                            {item.quantity &&
+                                                <strong
+                                                    className={cn("font-bold")}>{item.quantity}</strong>} {item.name}
                                         </div>
                                     </div>
                                 ))}
@@ -176,13 +191,13 @@ export default function RecipesDetail() {
 
                             <div className={cn("flex gap-2 items-center text-gray-600")}>
                                 <ClockIcon className={cn("size-6")}/>
-                                <p>{detail.instructions?.time}</p>
+                                <p>{detail.time}</p>
                             </div>
 
                             <div className={cn("flex flex-col gap-4")}>
-                                {detail.instructions?.steps?.map((item, idx) => (
+                                {detail?.cookSteps?.map((item, idx) => (
                                     <Fragment key={idx}>
-                                        <div className={cn("text-[#4a4a4a] text-lg flex gap-2 items-center")}>
+                                        <div className={cn("text-[#4a4a4a] text-lg flex gap-2 items-start")}>
                                             <p
                                                 className={cn(
                                                     "size-8 bg-[#4a4a4a] text-white rounded-full",
@@ -191,12 +206,12 @@ export default function RecipesDetail() {
                                             >
                                                 {idx + 1}
                                             </p>
-                                            <p>
+                                            <p className={cn("whitespace-pre-line")}>
                                                 {item.description}
                                             </p>
                                         </div>
-                                        <div className={cn("flex gap-4 pl-10")}>
-                                            {item.imgList.map((item, idx) => (
+                                        <div className={cn("flex gap-4 flex-wrap pl-10")}>
+                                            {item.imageUrls?.map((item, idx) => (
                                                 <img
                                                     key={idx}
                                                     src={item || ""}

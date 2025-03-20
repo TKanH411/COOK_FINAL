@@ -12,7 +12,7 @@ import {useAuth} from "@/context/hooks/useAuth";
 import {ROUTES} from "@/routes/routes";
 
 const FormSchema = z.object({
-    username: z.string().nonempty("Username is required"),
+    email: z.string().nonempty("Email is required"),
     password: z.string().nonempty("Password is required"),
     isRemember: z.boolean(),
 })
@@ -23,7 +23,7 @@ function Login() {
     const {control, handleSubmit, formState} = useForm({
         resolver: zodResolver(FormSchema),
         defaultValues: {
-            username: "",
+            email: "",
             password: "",
             isRemember: false,
         }
@@ -44,7 +44,7 @@ function Login() {
                 <form className="w-full mt-5" onSubmit={handleSubmit(login)}>
                     <Controller
                         control={control}
-                        name="username"
+                        name="email"
                         render={({field}) => (
                             <Field>
                                 <Label className="hidden">Name</Label>
@@ -64,7 +64,7 @@ function Login() {
                             </Field>
                         )}
                     />
-                    <FieldError error={errors?.username} className={cn("pl-4")}/>
+                    <FieldError error={errors?.email} className={cn("pl-4")}/>
 
                     <Controller
                         control={control}
